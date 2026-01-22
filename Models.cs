@@ -1,6 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using System.Net;
+
+namespace EFCoreApplication;
 
 public class DeviceOnlineLoggingContext : DbContext {
 	public DbSet<OnlineLog> OnlineLogs { get; set; }

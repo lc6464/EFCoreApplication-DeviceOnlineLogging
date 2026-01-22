@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Net;
+﻿using EFCoreApplication;
 
 try {
 	Directory.CreateDirectory(DeviceOnlineLoggingContext.DbFolder);
@@ -27,6 +26,7 @@ while (true) {
 		Console.WriteLine("3. 查询设备");
 		Console.WriteLine("4. 记录设备在线日志");
 		Console.WriteLine("5. 查询设备在线日志");
+		Console.WriteLine("6. 列出最近在线日志");
 		Console.WriteLine("0. 退出");
 		Console.Write("输入选项编号：");
 
@@ -38,10 +38,10 @@ while (true) {
 					Console.WriteLine("设备名称不能为空");
 					continue;
 				}
-				CreateDevice(deviceName.Trim());
+				Actions.CreateDevice(deviceName.Trim());
 				break;
 			case "2":
-				ListDevices();
+				Actions.ListDevices();
 				break;
 			case "3":
 				Console.Write("输入设备名称：");
@@ -50,7 +50,7 @@ while (true) {
 					Console.WriteLine("设备名称不能为空");
 					continue;
 				}
-				QueryDevice(deviceNameQuery.Trim());
+				Actions.QueryDevice(deviceNameQuery.Trim());
 				break;
 			case "4":
 				Console.Write("输入设备名称：");
@@ -69,7 +69,7 @@ while (true) {
 					Console.WriteLine("无效的 IP 地址格式");
 					continue;
 				}
-				LogLANIPAddress(deviceNameLog.Trim(), ipAddress);
+				Actions.LogLANIPAddress(deviceNameLog.Trim(), ipAddress);
 				break;
 			case "5":
 				Console.Write("输入设备名称：");
@@ -78,7 +78,30 @@ while (true) {
 					Console.WriteLine("设备名称不能为空");
 					continue;
 				}
-				QueryLogs(deviceNameQueryLogs.Trim());
+				Console.Write("输入要查询的日志数量（默认 5，最大 100）：");
+				var countString = Console.ReadLine();
+				if (string.IsNullOrWhiteSpace(countString)) {
+					Actions.QueryLogs(deviceNameQueryLogs.Trim());
+				} else {
+					if (!uint.TryParse(countString, out var count)) {
+						count = 5;
+						Console.WriteLine("无效的数量输入，已自动设置为默认值 5");
+					}
+					Actions.QueryLogs(deviceNameQueryLogs.Trim(), count);
+				}
+				break;
+			case "6":
+				Console.Write("输入要查询的日志数量（默认 20，最大 200）：");
+				var listCountString = Console.ReadLine();
+				if (string.IsNullOrWhiteSpace(listCountString)) {
+					Actions.ListLogs();
+				} else {
+					if (!uint.TryParse(listCountString, out var listCount)) {
+						listCount = 20;
+						Console.WriteLine("无效的数量输入，已自动设置为默认值 20");
+					}
+					Actions.ListLogs(listCount);
+				}
 				break;
 			case "0":
 				return 0;
@@ -89,115 +112,5 @@ while (true) {
 	} catch (Exception e) {
 		Console.Error.WriteLine($"检测到异常：{e.Message}");
 		continue;
-	}
-}
-
-
-void CreateDevice(string deviceName) {
-	using var db = new DeviceOnlineLoggingContext();
-
-	// Check if device already exists
-	if (db.Devices.Any(d => d.DeviceName == deviceName)) {
-		Console.WriteLine($"设备 {deviceName} 已存在");
-		return;
-	}
-
-	var device = new Device {
-		DeviceName = deviceName,
-		LatestLANIPAddress = IPAddress.None,
-		LatestLogTime = DateTime.UtcNow,
-	};
-
-	db.Devices.Add(device);
-	db.SaveChanges();
-
-	Console.WriteLine($"已创建设备 {deviceName}，DeviceId: {device.DeviceId}");
-}
-
-void ListDevices() {
-	using var db = new DeviceOnlineLoggingContext();
-
-	var devices = db.Devices
-		.Select(d => new { d.DeviceName, d.DeviceId })
-		.ToList();
-
-	if (devices.Count == 0) {
-		Console.WriteLine("没有找到任何设备");
-		return;
-	}
-
-	Console.WriteLine($"设备列表（共 {devices.Count} 个）：");
-	foreach (var device in devices) {
-		Console.WriteLine($"DeviceName: {device.DeviceName}, DeviceId: {device.DeviceId}");
-	}
-}
-
-void QueryDevice(string deviceName) {
-	using var db = new DeviceOnlineLoggingContext();
-
-	var device = db.Devices.FirstOrDefault(d => d.DeviceName == deviceName);
-	if (device == null) {
-		Console.WriteLine($"未找到设备 {deviceName}");
-		return;
-	}
-
-	Console.WriteLine($"已找到设备 {deviceName} ({device.DeviceId})");
-	Console.WriteLine($"LatestLANIPAddress: {device.LatestLANIPAddress}, LatestLogTime: {device.LatestLogTime}");
-}
-
-void LogLANIPAddress(string deviceName, IPAddress lanIPAddress, string? message = null) {
-	using var db = new DeviceOnlineLoggingContext();
-
-	var device = db.Devices.FirstOrDefault(d => d.DeviceName == deviceName);
-	if (device == null) {
-		Console.WriteLine($"未找到设备 {deviceName}");
-		return;
-	}
-
-	var log = new OnlineLog {
-		Device = device,
-		LANIPAddress = lanIPAddress,
-		LogTime = DateTime.UtcNow,
-		Message = message,
-	};
-
-	db.OnlineLogs.Add(log);
-
-	device.LatestLANIPAddress = lanIPAddress;
-	device.LatestLogTime = log.LogTime;
-
-	db.SaveChanges();
-
-	Console.WriteLine($"已记录设备 {deviceName} 的在线日志，LAN IP 地址：{lanIPAddress}");
-}
-
-void QueryLogs(string deviceName, uint count = 5) {
-	using var db = new DeviceOnlineLoggingContext();
-
-	var result = db.Devices.Where(d => d.DeviceName == deviceName)
-		.Select(d => new {
-			DeviceName = d.DeviceName,
-			RecentLogs = d.OnlineLogs
-				.OrderByDescending(log => log.LogTime)
-				.Take((int)count)
-				.ToList()
-		})
-		.FirstOrDefault();
-
-	if (result == null) {
-		Console.WriteLine($"未找到设备 {deviceName}");
-		return;
-	}
-
-	var logs = result.RecentLogs;
-
-	if (logs.Count == 0) {
-		Console.WriteLine($"设备 {result.DeviceName} 没有任何日志");
-		return;
-	}
-
-	Console.WriteLine($"设备 {result.DeviceName} 的最近 {logs.Count} 条日志：");
-	foreach (var log in logs) {
-		Console.WriteLine($"LogTime: {log.LogTime}, LAN IP: {log.LANIPAddress}, Message: {log.Message}");
 	}
 }
