@@ -11,7 +11,7 @@ namespace EFCoreApplication.CompiledModels
     public partial class DeviceOnlineLoggingContextModel
     {
         private DeviceOnlineLoggingContextModel()
-            : base(skipDetectChanges: false, modelId: new Guid("69477a6f-f8ac-43d9-8704-96ee0740f731"), entityTypeCount: 2)
+            : base(skipDetectChanges: false, modelId: new Guid("dbcbe7ff-c9ff-496e-a7f6-458bd7fb753a"), entityTypeCount: 2)
         {
         }
 

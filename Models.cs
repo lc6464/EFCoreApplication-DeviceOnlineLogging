@@ -31,7 +31,7 @@ public class OnlineLog {
 
 	public DateTime LogTime { get; set; }
 
-	public required IPAddress LANIPAddress { get; set; }
+	public required List<IPAddress> ReportedAddresses { get; set; }
 
 	public string? Message { get; set; }
 
@@ -48,7 +48,7 @@ public class Device {
 
 	public DateTime LatestLogTime { get; set; }
 
-	public required IPAddress LatestLANIPAddress { get; set; }
+	public List<IPAddress> LatestReportedAddresses { get; set; } = [];
 
 
 	public ICollection<OnlineLog> OnlineLogs { get; } = [];

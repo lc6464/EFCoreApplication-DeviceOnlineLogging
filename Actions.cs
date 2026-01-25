@@ -12,7 +12,6 @@ internal static class Actions {
 
 		var device = new Device {
 			DeviceName = deviceName,
-			LatestLANIPAddress = IPAddress.None,
 			LatestLogTime = DateTime.UtcNow,
 		};
 
@@ -50,10 +49,10 @@ internal static class Actions {
 		}
 
 		Console.WriteLine($"已找到设备 {deviceName} ({device.DeviceId})");
-		Console.WriteLine($"LatestLANIPAddress: {device.LatestLANIPAddress}, LatestLogTime: {device.LatestLogTime}");
+		Console.WriteLine($"LatestReportedAddresses: [{string.Join(", ", device.LatestReportedAddresses)}], LatestLogTime: {device.LatestLogTime}");
 	}
 
-	public static void LogLANIPAddress(string deviceName, IPAddress lanIPAddress, string? message = null) {
+	public static void LogOnline(string deviceName, IPAddress reportedAddress, string? message = null) {
 		using var db = new DeviceOnlineLoggingContext();
 
 		var device = db.Devices.FirstOrDefault(d => d.DeviceName == deviceName);
@@ -64,19 +63,19 @@ internal static class Actions {
 
 		var log = new OnlineLog {
 			Device = device,
-			LANIPAddress = lanIPAddress,
+			ReportedAddresses = [reportedAddress],
 			LogTime = DateTime.UtcNow,
 			Message = message,
 		};
 
 		db.OnlineLogs.Add(log);
 
-		device.LatestLANIPAddress = lanIPAddress;
+		device.LatestReportedAddresses = [reportedAddress];
 		device.LatestLogTime = log.LogTime;
 
 		db.SaveChanges();
 
-		Console.WriteLine($"已记录设备 {deviceName} 的在线日志，LAN IP 地址：{lanIPAddress}");
+		Console.WriteLine($"已记录设备 {deviceName} 的在线日志，上报的地址列表：[{string.Join(", ", new[] { reportedAddress })}]");
 	}
 
 	public static void QueryLogs(string deviceName, uint count = 5) {
@@ -116,7 +115,7 @@ internal static class Actions {
 
 		Console.WriteLine($"设备 {result.DeviceName} 的最近 {logs.Count} 条日志：");
 		foreach (var log in logs) {
-			Console.WriteLine($"LogTime: {log.LogTime}, LAN IP: {log.LANIPAddress}, Message: {log.Message}");
+			Console.WriteLine($"LogTime: {log.LogTime}, ReportedAddresses: [{string.Join(", ", log.ReportedAddresses)}], Message: {log.Message}");
 		}
 	}
 
@@ -139,7 +138,7 @@ internal static class Actions {
 			.Select(log => new {
 				log.Device.DeviceName,
 				log.LogTime,
-				log.LANIPAddress,
+				log.ReportedAddresses,
 				log.Message
 			})
 			.ToList();
@@ -151,7 +150,7 @@ internal static class Actions {
 
 		Console.WriteLine($"最近 {logs.Count} 条日志：");
 		foreach (var log in logs) {
-			Console.WriteLine($"Device: {log.DeviceName}, LogTime: {log.LogTime}, LAN IP: {log.LANIPAddress}, Message: {log.Message}");
+			Console.WriteLine($"Device: {log.DeviceName}, LogTime: {log.LogTime}, ReportedAddresses: [{string.Join(", ", log.ReportedAddresses)}], Message: {log.Message}");
 		}
 	}
 }

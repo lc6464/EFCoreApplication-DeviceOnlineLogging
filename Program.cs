@@ -59,17 +59,17 @@ while (true) {
 					Console.WriteLine("设备名称不能为空");
 					continue;
 				}
-				Console.Write("输入设备 LAN IP 地址：");
-				var lanIpAddress = Console.ReadLine();
-				if (string.IsNullOrWhiteSpace(lanIpAddress)) {
-					Console.WriteLine("设备 LAN IP 地址不能为空");
+				Console.Write("输入设备上报的地址：");
+				var reportedAddressString = Console.ReadLine();
+				if (string.IsNullOrWhiteSpace(reportedAddressString)) {
+					Console.WriteLine("设备上报的地址不能为空");
 					continue;
 				}
-				if (IPAddress.TryParse(lanIpAddress.Trim(), out var ipAddress) == false) {
+				if (IPAddress.TryParse(reportedAddressString.Trim(), out var ipAddress) == false) {
 					Console.WriteLine("无效的 IP 地址格式");
 					continue;
 				}
-				Actions.LogLANIPAddress(deviceNameLog.Trim(), ipAddress);
+				Actions.LogOnline(deviceNameLog.Trim(), ipAddress);
 				break;
 			case "5":
 				Console.Write("输入设备名称：");

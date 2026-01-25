@@ -43,12 +43,6 @@ namespace EFCoreApplication.CompiledModels
                 fieldInfo: typeof(OnlineLog).GetField("<DeviceId>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly),
                 sentinel: new Guid("00000000-0000-0000-0000-000000000000"));
 
-            var lANIPAddress = runtimeEntityType.AddProperty(
-                "LANIPAddress",
-                typeof(IPAddress),
-                propertyInfo: typeof(OnlineLog).GetProperty("LANIPAddress", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
-                fieldInfo: typeof(OnlineLog).GetField("<LANIPAddress>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
-
             var logTime = runtimeEntityType.AddProperty(
                 "LogTime",
                 typeof(DateTime),
@@ -62,6 +56,13 @@ namespace EFCoreApplication.CompiledModels
                 propertyInfo: typeof(OnlineLog).GetProperty("Message", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
                 fieldInfo: typeof(OnlineLog).GetField("<Message>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly),
                 nullable: true);
+
+            var reportedAddresses = runtimeEntityType.AddProperty(
+                "ReportedAddresses",
+                typeof(List<IPAddress>),
+                propertyInfo: typeof(OnlineLog).GetProperty("ReportedAddresses", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
+                fieldInfo: typeof(OnlineLog).GetField("<ReportedAddresses>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
+            var reportedAddressesElementType = reportedAddresses.SetElementType(typeof(IPAddress));
 
             var key = runtimeEntityType.AddKey(
                 new[] { onlineLogId });
